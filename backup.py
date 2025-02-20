@@ -5,8 +5,11 @@ from datetime import datetime
 import pytz
 import re
 
+# 定義不需要轉換的字符列表
+preserved_chars = ['吃', '才', '裡']
+
 def get_current_time():
-    # 設定台灣時區
+    # 設定臺灣時區
     tw_timezone = pytz.timezone('Asia/Taipei')
     return datetime.now(tw_timezone).strftime('%Y-%m-%d %H:%M:%S (UTC+8)')
 
@@ -25,13 +28,12 @@ def convert_chinese_only(text, cc):
     
     def replace_chinese(match):
         text = match.group(0)
-        # 如果匹配到的文字包含「吃」或「才」，則保持原樣
-        preserved_chars = ['吃', '才']
+        # 如果匹配到的文字包含任何需要保留的字符
         if any(char in text for char in preserved_chars):
             # 將文字分成字符列表，逐個處理
             chars = list(text)
             for i, char in enumerate(chars):
-                # 如果字符不是「吃」或「才」，則轉換
+                # 如果字符不在保留列表中，則轉換
                 if char not in preserved_chars:
                     chars[i] = cc.convert(char)
             return ''.join(chars)
