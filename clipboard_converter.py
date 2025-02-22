@@ -19,26 +19,98 @@ def is_table_content(text):
     # 檢查是否每行都包含 tab 或至少一個逗號
     return all('\t' in line or ',' in line for line in lines)
 
+def is_code_content(text):
+    # 檢查是否為程式碼
+    
+    # 1. 檢查是否為註釋行或變數定義
+    line = text.strip()
+    if line.startswith('//'):
+        # 檢查是否為變數定義或配置格式
+        if re.match(r'^//\s*[a-zA-Z_][a-zA-Z0-9_]*\s*[:=]', line):
+            return True
+        # 檢查是否包含常見的程式碼值格式
+        if re.search(r':\s*\d+,?$', line):  # 例如 // userId: 10000000,
+            return True
+    
+    if line.startswith('/*'):
+        return True
+        
+    # 2. 檢查常見的程式碼特徵
+    code_indicators = [
+        # 常見程式語言的關鍵字
+        'function ', 'def ', 'class ', 'import ', 'from ', 'var ', 'let ', 'const ',
+        'return ', 'if ', 'else ', 'for ', 'while ', 'try ', 'catch ',
+        # 常見程式碼符號組合
+        '=>', '{', '}', ');', '};', '());',
+        # 變數賦值模式
+        ': true,', ': false,', ': null,', ': undefined,',
+        # HTML/XML 標籤
+        '<div', '<span', '<p>', '</p>', '<a ', '</a>',
+        # SQL 關鍵字
+        'SELECT ', 'FROM ', 'WHERE ', 'INSERT ', 'UPDATE ',
+        # 程式碼縮排特徵
+        '    def ', '    if ', '    return',
+    ]
+    
+    # 檢查每一行
+    lines = text.split('\n')
+    for line in lines:
+        line = line.strip()
+        
+        # 檢查是否為純程式碼行（不包含中文字符）
+        has_chinese = bool(re.search(r'[\u4e00-\u9fff]', line))
+        
+        # 檢查是否包含程式碼指標
+        if any(indicator in line for indicator in code_indicators) and not has_chinese:
+            return True
+            
+        # 檢查是否為常見的程式碼模式
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*\([^)]*\)\s*{?\s*$', line):  # 函數定義
+            return True
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*function\s*\(', line):  # JavaScript 函數
+            return True
+        if re.match(r'^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*function', line):  # 物件方法
+            return True
+        # 檢查變數定義格式
+        if re.match(r'^\s*[a-zA-Z_][a-zA-Z0-9_]*\s*:\s*\d+,?\s*$', line):  # 變數定義
+            return True
+            
+    return False
+
 def convert_chinese_only(text, cc):
+    # 如果是程式碼，直接返回原文
+    if is_code_content(text):
+        return text
+        
     # 使用正則表達式找出所有中文字符
     chinese_pattern = r'[\u4e00-\u9fff]+'
     
+    # 定義不需要轉換的字符列表
+    preserved_chars = ['吃', '才']
+    
     def replace_chinese(match):
         text = match.group(0)
-        # 如果匹配到的文字包含「吃」或「才」，則保持原樣
-        preserved_chars = ['吃', '才']
+        # 如果匹配到的文字包含任何需要保留的字符
         if any(char in text for char in preserved_chars):
-            # 將文字分成字符列表，逐個處理
             chars = list(text)
             for i, char in enumerate(chars):
-                # 如果字符不是「吃」或「才」，則轉換
                 if char not in preserved_chars:
                     chars[i] = cc.convert(char)
             return ''.join(chars)
         return cc.convert(text)
     
-    # 只轉換中文部分
-    return re.sub(chinese_pattern, replace_chinese, text)
+    # 逐行處理文本
+    lines = text.split('\n')
+    converted_lines = []
+    for line in lines:
+        # 如果這行是程式碼註釋，保持原樣
+        if line.strip().startswith('//') or line.strip().startswith('/*'):
+            converted_lines.append(line)
+        else:
+            # 只轉換中文部分
+            converted_lines.append(re.sub(chinese_pattern, replace_chinese, line))
+    
+    return '\n'.join(converted_lines)
 
 def convert_to_markdown_table(text, cc):
     lines = text.split('\n')
@@ -47,14 +119,23 @@ def convert_to_markdown_table(text, cc):
     
     # 創建 Markdown 表格
     markdown_lines = []
-    # 添加標題行（只轉換中文部分）
-    header = [convert_chinese_only(cell, cc) for cell in table_data[0]]
+    
+    def convert_cell(cell):
+        # 檢查單元格是否包含程式碼
+        if is_code_content(cell):
+            return cell  # 如果是程式碼，保持原樣
+        return convert_chinese_only(cell, cc)  # 否則轉換中文
+    
+    # 添加標題行（檢查每個單元格是否為程式碼）
+    header = [convert_cell(cell) for cell in table_data[0]]
     markdown_lines.append('| ' + ' | '.join(header) + ' |')
+    
     # 添加分隔行
     markdown_lines.append('| ' + ' | '.join(['---' for _ in table_data[0]]) + ' |')
-    # 添加數據行（只轉換中文部分）
+    
+    # 添加數據行（檢查每個單元格是否為程式碼）
     for row in table_data[1:]:
-        converted_row = [convert_chinese_only(cell, cc) for cell in row]
+        converted_row = [convert_cell(cell) for cell in row]
         markdown_lines.append('| ' + ' | '.join(converted_row) + ' |')
     
     return '\n'.join(markdown_lines)
@@ -89,14 +170,16 @@ def main():
                 current_clipboard.strip() and 
                 not is_markdown_link(current_clipboard)):
                 
-                # 檢查是否為表格內容
-                if is_table_content(current_clipboard):
-                    # 轉換表格（只轉換中文部分）
-                    converted_text = convert_to_markdown_table(current_clipboard, cc)
-                else:
-                    # 一般文本只轉換中文部分
-                    converted_text = convert_chinese_only(current_clipboard, cc)
+                # # 檢查是否為表格內容
+                # if is_table_content(current_clipboard):
+                #     # 轉換表格（只轉換中文部分）
+                #     converted_text = convert_to_markdown_table(current_clipboard, cc)
+                # else:
+                #     # 一般文本只轉換中文部分
+                #     converted_text = convert_chinese_only(current_clipboard, cc)
                 
+                converted_text = convert_chinese_only(current_clipboard, cc)
+
                 pyperclip.copy(converted_text)
                 write_to_log(current_clipboard, converted_text)
                 
