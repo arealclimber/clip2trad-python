@@ -88,15 +88,27 @@ def convert_chinese_only(text, cc):
     # Define characters that should not be converted
     preserved_chars = ['吃', '才']
     
+    # Define custom character mappings
+    custom_mappings = {
+        '里': '裡',
+        '为': '為'
+    }
+    
     def replace_chinese(match):
         text = match.group(0)
-        # If matched text contains any preserved characters
+        # First check for custom mappings
+        for simplified, traditional in custom_mappings.items():
+            text = text.replace(simplified, traditional)
+            
+        # Then handle preserved characters
         if any(char in text for char in preserved_chars):
             chars = list(text)
             for i, char in enumerate(chars):
                 if char not in preserved_chars:
                     chars[i] = cc.convert(char)
             return ''.join(chars)
+        
+        # Convert remaining text
         return cc.convert(text)
     
     # Process text line by line
