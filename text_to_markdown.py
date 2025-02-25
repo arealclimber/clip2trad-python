@@ -1,48 +1,48 @@
 import re
 
 def convert_to_markdown(text):
-    # 移除多餘的空白行
+    # Remove extra blank lines
     text = text.strip()
     
-    # 將文字按行分割
+    # Split text into lines
     lines = text.splitlines()
     
     converted_lines = []
     
     for line in lines:
-        # 移除行首尾的空白
+        # Remove leading and trailing whitespace
         line = line.strip()
         
-        # 處理主要項目符號 "- "
+        # Handle primary bullet points "- "
         if line.startswith('- '):
             line = line.replace('- ', '# ', 1)
             
-        # 處理次要項目符號 "• "，改為使用 "- "
+        # Handle secondary bullet points "• ", replace with "- "
         elif '•' in line:
-            # 移除開頭的空白，並將項目符號替換成markdown格式
+            # Remove leading whitespace and replace bullet point with markdown format
             line = re.sub(r'\s*•\s*', '- ', line)
             
-        # 如果不是空行就加入結果
+        # Add line if it's not empty
         if line:
             converted_lines.append(line)
     
-    # 合併所有行並加上適當的換行
+    # Join all lines with appropriate line breaks
     return '\n'.join(converted_lines)
 
 def process_file(input_text):
-    """處理輸入文字並返回markdown格式"""
+    """Process input text and return markdown format"""
     return convert_to_markdown(input_text)
 
 if __name__ == "__main__":
-    # 測試用範例
+    # Test example
     sample_text = """  
     
-• 從「舊流程(登入後檢查 IP)」變為「新流程(強制 2FA)」的最大差異，在於「預先」阻擋可疑登入，而不再依靠「事後通知」與「使用者自行封鎖」。  
-• 後端在新流程中最主要的挑戰是「2FA 驗證碼產生、寄送、比對」與「對接前端的驗證狀態管理」，並決定是否還要保留一部分舊流程的功能 (如封鎖 IP) 作為補強。  
-• 前後端需討論的重點在於：如何在前端順暢地完成驗證碼輸入、顯示錯誤與倒數、是否保留舊的 IP 管理介面，以及在新舊流程切換時的 UI/UX 與使用者認知。  
+• When changing from "old process (IP check after login)" to "new process (forced 2FA)", the main difference is "preventing" suspicious logins in advance, rather than relying on "post-notification" and "user self-blocking".  
+• The main challenges for the backend in the new process are "2FA code generation, sending, and verification" and "managing verification status with frontend", and deciding whether to retain some features from the old process (like IP blocking) as reinforcement.  
+• Key discussion points between frontend and backend include: how to smoothly complete code input on frontend, display errors and countdown, whether to keep the old IP management interface, and UI/UX and user awareness during the transition between old and new processes.  
     
     """
     
     result = process_file(sample_text)
-    print("轉換結果：\n")
+    print("Conversion result:\n")
     print(result) 
