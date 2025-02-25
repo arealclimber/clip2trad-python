@@ -1,0 +1,8 @@
+README.md
+setup.py
+clipboard_converter.egg-info/PKG-INFO
+clipboard_converter.egg-info/SOURCES.txt
+clipboard_converter.egg-info/dependency_links.txt
+clipboard_converter.egg-info/entry_points.txt
+clipboard_converter.egg-info/requires.txt
+clipboard_converter.egg-info/top_level.txt

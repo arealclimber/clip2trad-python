@@ -1,0 +1,7 @@
+Metadata-Version: 2.2
+Name: clipboard-converter
+Version: 1.0.0
+Requires-Dist: pyperclip
+Requires-Dist: opencc-python-reimplemented
+Requires-Dist: pytz
+Dynamic: requires-dist
