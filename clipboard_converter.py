@@ -5,6 +5,27 @@ from datetime import datetime
 import pytz
 import re
 
+# Define characters that should not be converted
+preserved_chars = ['吃', '才']
+
+# Define custom character mappings
+custom_mappings = {
+    '里': '裡',
+    '为': '為',
+    '着': '著',
+    '账': '帳',
+    '了': '了',
+    '了解': '了解',
+    '群': '群',
+    '个': '個',
+}
+
+# Change the unusual traditional Chinese characters to the common ones
+manual_mappings = {
+    '瞭解': '了解',
+    '羣': '群',
+}
+
 def get_current_time():
     # Set Taiwan timezone
     tw_timezone = pytz.timezone('Asia/Taipei')
@@ -85,14 +106,6 @@ def convert_chinese_only(text, cc):
     # Use regex to find all Chinese characters
     chinese_pattern = r'[\u4e00-\u9fff]+'
     
-    # Define characters that should not be converted
-    preserved_chars = ['吃', '才']
-    
-    # Define custom character mappings
-    custom_mappings = {
-        '里': '裡',
-        '为': '為'
-    }
     
     def replace_chinese(match):
         text = match.group(0)
@@ -165,6 +178,18 @@ def is_markdown_link(text):
     markdown_link_pattern = r'^\[([^\]]+)\]\(([^)]+)\)$'
     return bool(re.match(markdown_link_pattern, text.strip()))
 
+def apply_manual_mappings(text, mappings):
+    """
+    根據手動映射字典替換文本中的指定詞彙。
+
+    :param text: 要處理的文本
+    :param mappings: 替換映射字典
+    :return: 替換後的文本
+    """
+    for key, value in mappings.items():
+        text = text.replace(key, value)
+    return text
+
 def main():
     cc = OpenCC('s2t')
     last_clipboard = pyperclip.paste() or ''  # Use empty string if None is returned
@@ -184,6 +209,7 @@ def main():
                     not is_markdown_link(current_clipboard)):
                     
                     converted_text = convert_chinese_only(current_clipboard, cc)
+                    converted_text = apply_manual_mappings(converted_text, manual_mappings)
 
                     pyperclip.copy(converted_text)
                     write_to_log(current_clipboard, converted_text)
