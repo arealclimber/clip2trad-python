@@ -15,8 +15,6 @@ custom_mappings = {
     '着': '著',
     '账': '帳',
     '了': '了',
-    '了解': '了解',
-    '群': '群',
     '个': '個',
 }
 
@@ -24,6 +22,7 @@ custom_mappings = {
 manual_mappings = {
     '瞭解': '了解',
     '羣': '群',
+    '臺': '台',
 }
 
 def get_current_time():
