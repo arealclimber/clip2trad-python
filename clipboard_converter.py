@@ -23,6 +23,7 @@ manual_mappings = {
     '瞭解': '了解',
     '羣': '群',
     '臺': '台',
+    '峯': '峰',
 }
 
 def get_current_time():
