@@ -24,6 +24,8 @@ manual_mappings = {
     '羣': '群',
     '臺': '台',
     '峯': '峰',
+    '喫': '吃',
+    '纔': '才',
 }
 
 def get_current_time():
