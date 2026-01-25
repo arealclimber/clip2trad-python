@@ -26,6 +26,7 @@ manual_mappings = {
     '峯': '峰',
     '喫': '吃',
     '纔': '才',
+    '牀': '床'
 }
 
 def get_current_time():
